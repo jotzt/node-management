@@ -1,6 +1,6 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 
-import urllib
+import requests 
 import json
 import ipaddress
 import argparse
@@ -22,20 +22,18 @@ def find_host(search_host, inventory):
 
 
 def get_nodes():
-    json_url = "http://map.freifunk-duesseldorf.de/nodes.json"
-    response = urllib.urlopen(json_url)
-    nodes = json.loads(response.read().decode("utf-8"))['nodes']
-    return nodes
+    json_url = "https://karte.freifunk-muensterland.de/data/map_ffmsd36/nodes.json"
+    response = requests.get(json_url).text
+    nodes = json.loads(response)['nodes']
+    return nodes 
 
 
 def build_inventory():
     hosts = []
-
-    for i, node in get_nodes().items():
+    for i, node in enumerate(get_nodes()):
         ip = get_ips_from_node(node)
         if ip is not False:
             hosts.append(ip)
-
     return {
         "nodes": {
             "hosts": hosts,
@@ -65,7 +63,6 @@ def main():
     Ansible dynamic inventory experimentation
     Output dynamic inventory as JSON from statically defined data structures
     '''
-
     # Argument parsing
     parser = argparse.ArgumentParser(description="Ansible dynamic inventory")
     parser.add_argument("--list",
@@ -75,15 +72,12 @@ def main():
                         help="Ansible inventory of a particular host",
                         action="store",
                         dest="ansible_host", type=str)
-
     cli_args = parser.parse_args()
     list_inventory = cli_args.list_inventory
     ansible_host = cli_args.ansible_host
-
     if list_inventory:
         ANSIBLE_INV = build_inventory()
         output_list_inventory(ANSIBLE_INV)
-
     if ansible_host:
         print("{}")
 
